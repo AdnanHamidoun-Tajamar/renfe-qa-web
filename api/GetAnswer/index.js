@@ -1,23 +1,26 @@
 const axios = require('axios');
 
 module.exports = async function (context, req) {
-    // Leemos la pregunta que viene de tu web
     const question = req.body && req.body.question;
     
-    if (!question) {
-        context.res = { status: 400, body: "Falta la pregunta" };
+    // 1. Verificamos que las variables de entorno existan
+    const endpoint = process.env.AZURE_ENDPOINT;
+    const key = process.env.AZURE_LANGUAGE_KEY;
+
+    if (!endpoint || !key) {
+        context.res = { 
+            status: 500, 
+            body: { answer: "Error: Faltan las variables de configuración en Azure." } 
+        };
         return;
     }
 
-    // Estas variables las leerá Azure de su panel de configuración
-    const endpoint = process.env.AZURE_ENDPOINT;
-    const key = process.env.AZURE_LANGUAGE_KEY;
-    const projectName = "FaqsRenfe";
-    const deploymentName = "production";
-
     try {
+        // 2. Limpiamos el endpoint por si tiene una barra al final
+        const cleanEndpoint = endpoint.endsWith('/') ? endpoint.slice(0, -1) : endpoint;
+
         const response = await axios.post(
-            `${endpoint}/language/:query-knowledgebases?projectName=${projectName}&api-version=2021-10-01&deploymentName=${deploymentName}`,
+            `${cleanEndpoint}/language/:query-knowledgebases?projectName=FaqsRenfe&api-version=2021-10-01&deploymentName=production`,
             { top: 1, question: question },
             { 
                 headers: { 
@@ -27,14 +30,13 @@ module.exports = async function (context, req) {
             }
         );
 
-        // Devolvemos solo la respuesta a tu HTML
         context.res = {
             body: { answer: response.data.answers[0].answer }
         };
     } catch (error) {
         context.res = {
             status: 500,
-            body: "Error conectando con el cerebro de Azure"
+            body: { answer: "Error al conectar con el servicio de IA de Azure." }
         };
     }
 };
