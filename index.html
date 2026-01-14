@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atención al Cliente - Renfe AI</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
+        .chat-container { width: 100%; max-width: 500px; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #823339; color: white; padding: 15px; text-align: center; font-weight: bold; }
+        #chat-box { height: 400px; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .msg { padding: 10px 15px; border-radius: 15px; max-width: 80%; line-height: 1.4; }
+        .user { align-self: flex-end; background: #e1f5fe; color: #01579b; }
+        .bot { align-self: flex-start; background: #f1f1f1; color: #333; }
+        .input-area { display: flex; border-top: 1px solid #ddd; }
+        input { flex: 1; border: none; padding: 15px; outline: none; }
+        button { background: #823339; color: white; border: none; padding: 0 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="header">Asistente Virtual Renfe</div>
+    <div id="chat-box">
+        <div class="msg bot">¡Hola! Soy el asistente de Renfe. ¿En qué puedo ayudarte hoy?</div>
+    </div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Escribe tu pregunta..." onkeypress="if(event.key === 'Enter') sendMessage()">
+        <button onclick="sendMessage()">Enviar</button>
+    </div>
+</div>
+
+<script>
+    // CONFIGURACIÓN CORREGIDA
+    // Solo la URL base, sin parámetros al final
+    const AZURE_ENDPOINT = "https://adnanlanguage2.cognitiveservices.azure.com"; 
+    // Solo la clave (el chorizo de letras y números), sin el comando curl
+    const AZURE_KEY = "7DplX4St4gB7SWc78vjGwHWcgLquTdMIcz5wZkoODbyo9lDbK4XnJQQJ99CAACYeBjFXJ3w3AAAaACOG4Eyi";
+    const PROJECT_NAME = "FaqsRenfe"; 
+    const DEPLOYMENT_NAME = "production";
+
+    async function sendMessage() {
+        const input = document.getElementById("userInput");
+        const chatBox = document.getElementById("chat-box");
+        const question = input.value.trim();
+
+        if (!question) return;
+
+        // Mostrar mensaje del usuario
+        chatBox.innerHTML += `<div class="msg user">${question}</div>`;
+        input.value = "";
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            // Construimos la URL correctamente con los parámetros necesarios
+            const url = `${AZURE_ENDPOINT}/language/:query-knowledgebases?projectName=${PROJECT_NAME}&api-version=2021-10-01&deploymentName=${DEPLOYMENT_NAME}`;
+
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Ocp-Apim-Subscription-Key": AZURE_KEY,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ 
+                    top: 1, 
+                    question: question,
+                    includeUnstructuredSources: true 
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.answers && data.answers.length > 0) {
+                const answer = data.answers[0].answer;
+                chatBox.innerHTML += `<div class="msg bot">${answer}</div>`;
+            } else {
+                chatBox.innerHTML += `<div class="msg bot">Lo siento, no he encontrado información sobre eso.</div>`;
+            }
+        } catch (error) {
+            console.error(error);
+            chatBox.innerHTML += `<div class="msg bot" style="color:red">Error de conexión. Revisa la consola del navegador.</div>`;
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
