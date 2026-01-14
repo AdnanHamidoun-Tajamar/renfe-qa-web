@@ -3,84 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Atención al Cliente - Renfe AI</title>
+    <title>Renfe AI - Soporte Inteligente</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
-        .chat-container { width: 100%; max-width: 500px; background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { background: #823339; color: white; padding: 15px; text-align: center; font-weight: bold; }
-        #chat-box { height: 400px; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px 15px; border-radius: 15px; max-width: 80%; line-height: 1.4; }
-        .user { align-self: flex-end; background: #e1f5fe; color: #01579b; }
-        .bot { align-self: flex-start; background: #f1f1f1; color: #333; }
-        .input-area { display: flex; border-top: 1px solid #ddd; }
-        input { flex: 1; border: none; padding: 15px; outline: none; }
-        button { background: #823339; color: white; border: none; padding: 0 20px; cursor: pointer; }
+        :root {
+            --renfe-purple: #823339;
+            --renfe-light: #f4f4f4;
+            --user-msg: #e3f2fd;
+            --bot-msg: #ffffff;
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #823339 0%, #4a1e22 100%);
+            margin: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+        }
+
+        .chat-card {
+            width: 90%;
+            max-width: 450px;
+            height: 600px;
+            background: var(--renfe-light);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: var(--renfe-purple);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        #chat-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f9f9f9;
+        }
+
+        .bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            font-size: 0.95em;
+            line-height: 1.4;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .user { align-self: flex-end; background: var(--user-msg); color: #1565c0; border-bottom-right-radius: 2px; }
+        .bot { align-self: flex-start; background: var(--bot-msg); color: #333; border-bottom-left-radius: 2px; border: 1px solid #eee; }
+
+        .input-box {
+            display: flex;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #ddd;
+        }
+
+        input {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 12px;
+            border-radius: 25px;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        input:focus { border-color: var(--renfe-purple); }
+
+        button {
+            background: var(--renfe-purple);
+            color: white;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            margin-left: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover { transform: scale(1.1); }
     </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="header">Asistente Virtual Renfe</div>
-    <div id="chat-box">
-        <div class="msg bot">¡Hola! Soy el asistente de Renfe. ¿En qué puedo ayudarte hoy?</div>
+<div class="chat-card">
+    <div class="chat-header">Asistente Virtual Renfe</div>
+    <div id="chat-content">
+        <div class="bubble bot">¡Hola! Soy tu asistente de Renfe. ¿En qué puedo ayudarte hoy?</div>
     </div>
-    <div class="input-area">
-        <input type="text" id="userInput" placeholder="Escribe tu pregunta..." onkeypress="if(event.key === 'Enter') sendMessage()">
-        <button onclick="sendMessage()">Enviar</button>
+    <div class="input-box">
+        <input type="text" id="userInput" placeholder="Escribe tu mensaje..." onkeypress="if(event.key === 'Enter') handleSend()">
+        <button onclick="handleSend()">➔</button>
     </div>
 </div>
 
 <script>
-    // CONFIGURACIÓN CORREGIDA
-    // Solo la URL base, sin parámetros al final
+    // RECUERDA ACTUALIZAR ESTOS DATOS CON LOS QUE COPIASTE ANTES
     const AZURE_ENDPOINT = "https://adnanlanguage2.cognitiveservices.azure.com"; 
-    // Solo la clave (el chorizo de letras y números), sin el comando curl
     const AZURE_KEY = "7DplX4St4gB7SWc78vjGwHWcgLquTdMIcz5wZkoODbyo9lDbK4XnJQQJ99CAACYeBjFXJ3w3AAAaACOG4Eyi";
     const PROJECT_NAME = "FaqsRenfe"; 
-    const DEPLOYMENT_NAME = "production";
 
-    async function sendMessage() {
+    async function handleSend() {
         const input = document.getElementById("userInput");
-        const chatBox = document.getElementById("chat-box");
-        const question = input.value.trim();
+        const chatContent = document.getElementById("chat-content");
+        const text = input.value.trim();
 
-        if (!question) return;
+        if (!text) return;
 
-        // Mostrar mensaje del usuario
-        chatBox.innerHTML += `<div class="msg user">${question}</div>`;
+        // Mensaje Usuario
+        chatContent.innerHTML += `<div class="bubble user">${text}</div>`;
         input.value = "";
-        chatBox.scrollTop = chatBox.scrollHeight;
+        chatContent.scrollTop = chatContent.scrollHeight;
 
         try {
-            // Construimos la URL correctamente con los parámetros necesarios
-            const url = `${AZURE_ENDPOINT}/language/:query-knowledgebases?projectName=${PROJECT_NAME}&api-version=2021-10-01&deploymentName=${DEPLOYMENT_NAME}`;
-
+            const url = `${AZURE_ENDPOINT}/language/:query-knowledgebases?projectName=${PROJECT_NAME}&api-version=2021-10-01&deploymentName=production`;
+            
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
                     "Ocp-Apim-Subscription-Key": AZURE_KEY,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ 
-                    top: 1, 
-                    question: question,
-                    includeUnstructuredSources: true 
-                })
+                body: JSON.stringify({ top: 1, question: text })
             });
 
             const data = await response.json();
-            
-            if (data.answers && data.answers.length > 0) {
-                const answer = data.answers[0].answer;
-                chatBox.innerHTML += `<div class="msg bot">${answer}</div>`;
-            } else {
-                chatBox.innerHTML += `<div class="msg bot">Lo siento, no he encontrado información sobre eso.</div>`;
-            }
-        } catch (error) {
-            console.error(error);
-            chatBox.innerHTML += `<div class="msg bot" style="color:red">Error de conexión. Revisa la consola del navegador.</div>`;
+            const botAnswer = data.answers[0].answer;
+
+            // Mensaje Bot
+            chatContent.innerHTML += `<div class="bubble bot">${botAnswer}</div>`;
+        } catch (e) {
+            chatContent.innerHTML += `<div class="bubble bot" style="color:red">Error de conexión con el servicio.</div>`;
         }
-        chatBox.scrollTop = chatBox.scrollHeight;
+        chatContent.scrollTop = chatContent.scrollHeight;
     }
 </script>
 
