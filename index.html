@@ -2,158 +2,353 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Renfe AI - Soporte Inteligente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Renfe - Asistente Virtual Inteligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /* --- Variables Corporativas Renfe --- */
         :root {
-            --renfe-purple: #823339;
-            --renfe-light: #f4f4f4;
-            --user-msg: #e3f2fd;
-            --bot-msg: #ffffff;
+            --renfe-primary: #823339; /* Color oficial Renfe */
+            --renfe-primary-dark: #5e2328;
+            --renfe-bg: #f8f9fa;
+            --chat-bg: #ffffff;
+            --user-bubble: #823339;
+            --bot-bubble: #f1f3f5;
+            --text-dark: #2c3e50;
+            --text-light: #ffffff;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+            --shadow-lg: 0 15px 30px rgba(0,0,0,0.12);
         }
 
-        body { 
-            font-family: 'Segoe UI', Roboto, sans-serif; 
-            background: linear-gradient(135deg, #823339 0%, #4a1e22 100%);
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--renfe-bg) 0%, #e9ecef 100%);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
+        /* --- Contenedor Principal (La Tarjeta del Chat) --- */
         .chat-card {
-            width: 90%;
-            max-width: 450px;
-            height: 600px;
-            background: var(--renfe-light);
-            border-radius: 20px;
+            width: 100%;
+            max-width: 480px;
+            height: 90vh;
+            max-height: 700px;
+            background: var(--chat-bg);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
             display: flex;
             flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.5);
         }
 
+        /* --- Cabecera con Logo --- */
         .chat-header {
-            background: var(--renfe-purple);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 1.2em;
-            font-weight: bold;
-            letter-spacing: 1px;
+            background: var(--renfe-primary);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-light);
+            box-shadow: var(--shadow-sm);
         }
 
-        #chat-content {
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-img {
+            height: 32px;
+            width: auto;
+            filter: brightness(0) invert(1); /* Vuelve el logo blanco */
+        }
+
+        .header-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .status-indicator {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .status-dot { width: 8px; height: 8px; background: #2ecc71; border-radius: 50%; }
+
+        /* --- Área de Mensajes --- */
+        #chat-box {
             flex: 1;
-            padding: 20px;
+            padding: 24px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            background: #f9f9f9;
+            gap: 20px;
+            background-image: radial-gradient(var(--renfe-bg) 1px, transparent 1px);
+            background-size: 20px 20px; /* Patrón de puntos sutil */
+            scroll-behavior: smooth;
+        }
+
+        /* --- Burbujas de Chat --- */
+        .message-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+            animation: slideInUp 0.4s ease cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         .bubble {
-            max-width: 85%;
-            padding: 12px 16px;
-            border-radius: 15px;
-            font-size: 0.95em;
-            line-height: 1.4;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            animation: fadeIn 0.3s ease;
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+            box-shadow: var(--shadow-sm);
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Estilos Bot */
+        .bot-container { align-self: flex-start; }
+        .bot-bubble {
+            background: var(--bot-bubble);
+            color: var(--text-dark);
+            border-bottom-left-radius: 4px;
+        }
+        .bot-avatar {
+            width: 28px; height: 28px; background: var(--renfe-primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 14px; margin-bottom: 6px;
+        }
 
-        .user { align-self: flex-end; background: var(--user-msg); color: #1565c0; border-bottom-right-radius: 2px; }
-        .bot { align-self: flex-start; background: var(--bot-msg); color: #333; border-bottom-left-radius: 2px; border: 1px solid #eee; }
+        /* Estilos Usuario */
+        .user-container { align-self: flex-end; }
+        .user-bubble {
+            background: var(--user-bubble);
+            color: var(--text-light);
+            border-bottom-right-radius: 4px;
+        }
 
-        .input-box {
+        /* --- Indicador de "Escribiendo..." --- */
+        .typing-indicator {
             display: flex;
-            padding: 15px;
-            background: white;
-            border-top: 1px solid #ddd;
+            gap: 4px;
+            padding: 12px 16px;
+            background: var(--bot-bubble);
+            border-radius: 18px;
+            width: fit-content;
+        }
+        .typing-dot {
+            width: 6px; height: 6px; background: #adb5bd; border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+        /* --- Área de Input (Inferior) --- */
+        .input-area {
+            padding: 16px 24px;
+            background: var(--chat-bg);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
         }
 
         input {
-            flex: 1;
-            border: 1px solid #ccc;
-            padding: 12px;
-            border-radius: 25px;
+            width: 100%;
+            border: 2px solid var(--bot-bubble);
+            padding: 14px 20px;
+            border-radius: 30px;
             outline: none;
-            transition: border 0.3s;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: var(--bot-bubble);
         }
 
-        input:focus { border-color: var(--renfe-purple); }
+        input:focus {
+            border-color: var(--renfe-primary);
+            background: var(--chat-bg);
+            box-shadow: 0 0 0 4px rgba(130, 51, 57, 0.1);
+        }
 
-        button {
-            background: var(--renfe-purple);
+        .send-btn {
+            background: var(--renfe-primary);
             color: white;
             border: none;
-            width: 45px;
-            height: 45px;
+            width: 54px;
+            height: 54px;
             border-radius: 50%;
-            margin-left: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
         }
 
-        button:hover { transform: scale(1.1); }
+        .send-btn:hover {
+            background: var(--renfe-primary-dark);
+            transform: scale(1.05);
+        }
+        
+        .send-btn svg { width: 20px; height: 20px; fill: white; margin-left: 2px; }
+
     </style>
 </head>
 <body>
 
 <div class="chat-card">
-    <div class="chat-header">Asistente Virtual Renfe</div>
-    <div id="chat-content">
-        <div class="bubble bot">¡Hola! Soy tu asistente de Renfe. ¿En qué puedo ayudarte hoy?</div>
+    <div class="chat-header">
+        <div class="brand-container">
+            <img src="renfe.png" alt="Renfe Logo" class="logo-img">
+            <div class="header-title">Asistente Renfe</div>
+        </div>
+        <div class="status-indicator">
+            <div class="status-dot"></div> Online AI
+        </div>
     </div>
-    <div class="input-box">
-        <input type="text" id="userInput" placeholder="Escribe tu mensaje..." onkeypress="if(event.key === 'Enter') handleSend()">
-        <button onclick="handleSend()">➔</button>
+
+    <div id="chat-box">
+        <div class="message-container bot-container">
+            <div class="bot-avatar">R</div>
+            <div class="bubble bot-bubble">
+                ¡Hola! Bienvenido al servicio de asistencia inteligente de Renfe. 🚆<br><br>Estoy conectado a la base de conocimiento oficial. ¿En qué puedo ayudarte con tus viajes, billetes o puntos?
+            </div>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="input-wrapper">
+            <input type="text" id="userInput" placeholder="Escribe tu consulta aquí..." onkeypress="if(event.key === 'Enter') sendMessage()">
+        </div>
+        <button class="send-btn" onclick="sendMessage()" aria-label="Enviar mensaje">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
     </div>
 </div>
 
 <script>
-    // RECUERDA ACTUALIZAR ESTOS DATOS CON LOS QUE COPIASTE ANTES
+    // ==========================================
+    // *** TUS CLAVES AQUÍ (LAS QUE YA FUNCIONABAN) ***
+    // ==========================================
     const AZURE_ENDPOINT = "https://adnanlanguage2.cognitiveservices.azure.com"; 
     const AZURE_KEY = "7DplX4St4gB7SWc78vjGwHWcgLquTdMIcz5wZkoODbyo9lDbK4XnJQQJ99CAACYeBjFXJ3w3AAAaACOG4Eyi";
     const PROJECT_NAME = "FaqsRenfe"; 
+    const DEPLOYMENT_NAME = "production";
+    // ==========================================
 
-    async function handleSend() {
-        const input = document.getElementById("userInput");
-        const chatContent = document.getElementById("chat-content");
-        const text = input.value.trim();
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("userInput");
 
-        if (!text) return;
+    async function sendMessage() {
+        const question = userInput.value.trim();
+        if (!question) return;
 
-        // Mensaje Usuario
-        chatContent.innerHTML += `<div class="bubble user">${text}</div>`;
-        input.value = "";
-        chatContent.scrollTop = chatContent.scrollHeight;
+        // 1. Mostrar mensaje del usuario
+        appendMessage(question, 'user');
+        userInput.value = "";
+
+        // 2. Mostrar indicador de "Escribiendo..."
+        const loadingId = showLoadingIndicator();
 
         try {
-            const url = `${AZURE_ENDPOINT}/language/:query-knowledgebases?projectName=${PROJECT_NAME}&api-version=2021-10-01&deploymentName=production`;
-            
+            // Construir URL de Azure
+            const url = `${AZURE_ENDPOINT}/language/:query-knowledgebases?projectName=${PROJECT_NAME}&api-version=2021-10-01&deploymentName=${DEPLOYMENT_NAME}`;
+
+            // Llamada a la API
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
                     "Ocp-Apim-Subscription-Key": AZURE_KEY,
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ top: 1, question: text })
+                body: JSON.stringify({ 
+                    top: 1, 
+                    question: question,
+                    includeUnstructuredSources: true 
+                })
             });
 
             const data = await response.json();
-            const botAnswer = data.answers[0].answer;
+            
+            // Quitar indicador de carga
+            removeLoadingIndicator(loadingId);
 
-            // Mensaje Bot
-            chatContent.innerHTML += `<div class="bubble bot">${botAnswer}</div>`;
-        } catch (e) {
-            chatContent.innerHTML += `<div class="bubble bot" style="color:red">Error de conexión con el servicio.</div>`;
+            // 3. Mostrar respuesta del bot
+            if (data.answers && data.answers.length > 0 && data.answers[0].confidenceScore > 0.3) {
+                // Solo respondemos si la confianza es decente (más de 30%)
+                appendMessage(data.answers[0].answer, 'bot');
+            } else {
+                 appendMessage("Lo siento, no tengo información suficiente en mi base de conocimiento actual para responder a eso. ¿Podrías intentar reformular la pregunta?", 'bot');
+            }
+
+        } catch (error) {
+            removeLoadingIndicator(loadingId);
+            console.error(error);
+             appendMessage("Error de conexión con el servicio de IA. Por favor, inténtalo más tarde.", 'bot');
         }
-        chatContent.scrollTop = chatContent.scrollHeight;
+    }
+
+    // Funciones auxiliares para la interfaz pro
+    function appendMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message-container ${sender}-container`;
+        
+        let htmlContent = '';
+        if (sender === 'bot') {
+             htmlContent += `<div class="bot-avatar">R</div>`;
+        }
+        htmlContent += `<div class="bubble ${sender}-bubble">${text}</div>`;
+        msgDiv.innerHTML = htmlContent;
+        
+        chatBox.appendChild(msgDiv);
+        scrollToBottom();
+    }
+
+    function showLoadingIndicator() {
+        const loadingId = 'loading-' + Date.now();
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = loadingId;
+        loadingDiv.className = 'message-container bot-container';
+        loadingDiv.innerHTML = `
+            <div class="bot-avatar">R</div>
+            <div class="bubble bot-bubble typing-indicator">
+                <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+            </div>`;
+        chatBox.appendChild(loadingDiv);
+        scrollToBottom();
+        return loadingId;
+    }
+
+    function removeLoadingIndicator(id) {
+        const element = document.getElementById(id);
+        if (element) element.remove();
+    }
+
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 </script>
 
